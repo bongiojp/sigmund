@@ -1,18 +1,40 @@
 #!/usr/bin/perl
 
-if (@ARGV != 5) {
-    die "Not enough arguments, requires 5.";
+if (@ARGV < 5) {
+    die "Not enough arguments, requires at least 5.";
 }
 
-$LOCALROOTDIR = $ARGV[0]; # the location on the server where all these files can be found
+my $LOCALROOTDIR = $ARGV[0]; # the location on the server where all these files can be found
                           # The value of Path will be <localrootdir>/<prefix><number>
-$PREFIX = $ARGV[1]; #prefix of all the directories and mount points
-$VERSION = $ARGV[2];  #1.5 or 2.0
-$NUMBER = $ARGV[3]; #number of exports to create
-$FSAL = $ARGV[4]; #fsal, used in 2.0 export entries
+my $PREFIX = $ARGV[1]; #prefix of all the directories and mount points
+my $VERSION = $ARGV[2];  #1.5 or 2.0
+my $NUMBER = $ARGV[3]; #number of exports to create
+my $FSAL = $ARGV[4]; #fsal, used in 2.0 export entries
+my @SKIP = qw();
+
+if (@ARGV > 5) {
+    foreach(5 .. (@ARGV - 1)) {
+        append(@SKIP, $ARGV[$_]);
+    }
+}
+
 
 if ($VERSION == "1.5") {
     foreach(1..${NUMBER}) {
+        $num = $_;
+
+        # Scan SKIP list and skip that entry if found.
+        $goodtogo = 1;
+        foreach(@SKIP) {
+            if ($_ == $num) {
+                $goodtogo = 0;
+                break;
+            }
+        }
+        if($goodtogo == 0) {
+            continue;
+        }
+
         my $ENTRY =  "EXPORT
 {
     Export_Id = 10${_} ;
